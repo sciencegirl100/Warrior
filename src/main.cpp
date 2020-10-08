@@ -3,7 +3,8 @@
 #include <Keypad.h>
 #define FLASH_DELAY 150
 
-const uint16_t cmdBtn = A3;
+const uint16_t cmdBtn = 10;
+const uint16_t gndBtn = 8;
 const byte R = 4;
 const byte C = 3;
 char keys[R][C] = {
@@ -12,8 +13,8 @@ char keys[R][C] = {
   {'7','8','9'},
   {'*','0','#'}
 };
-byte RP[R] = {2, 3, 4, 5};
-byte CP[C] = {6, 7, 8};
+byte RP[R] = {A5, A4, A3, A2};
+byte CP[C] = {2, 3, 4};
 Keypad key = Keypad(makeKeymap(keys), RP, CP, R, C);
 unsigned long lCnt;
 unsigned long sTme;
@@ -24,10 +25,10 @@ void setup(){
   lCnt = 0;
   sTme = millis();
   pinMode(cmdBtn, INPUT_PULLUP);
-  pinMode(A0, OUTPUT);
+  pinMode(gndBtn, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   delay(10);
-  digitalWrite(A0, LOW);
+  digitalWrite(gndBtn, LOW);
   delay(100);
   if(digitalRead(cmdBtn)){
     Keyboard.begin();
@@ -42,6 +43,7 @@ void setup(){
   }else{
     // Serial.write("PROGRAM");
     RUN_MODE = 1;
+    Serial.begin(9600);
     digitalWrite(LED_BUILTIN, HIGH);
   }
 }
@@ -61,36 +63,37 @@ void loop() {
       for (int i=0; i<LIST_MAX; i++) {  // Scan the whole key list.
         if ( key.key[i].stateChanged ) { // Only find keys that have changed state.
           switch (key.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
-          case PRESSED:
-          // buff = " PRESSED.";
-          if (key.key[i].kchar == '*'){
-            Keyboard.press(KEY_BACKSPACE);
-          }else if (key.key[i].kchar == '#'){
-            Keyboard.press(KEY_RETURN);
-          }else{
-            Keyboard.press(key.key[i].kchar);
+            case PRESSED:
+            // buff = " PRESSED.";
+            if (key.key[i].kchar == '*'){
+              Keyboard.press(KEY_BACKSPACE);
+            }else if (key.key[i].kchar == '#'){
+              Keyboard.press(KEY_RETURN);
+            }else{
+              Keyboard.press(key.key[i].kchar);
+            }
+            break;
+            case HOLD:
+            // buff = "
+            break;
+            case RELEASED:
+            // buff = " RELEASED.";
+            if (key.key[i].kchar == '*'){
+              Keyboard.release(KEY_BACKSPACE);
+            }else if (key.key[i].kchar == '#'){
+              Keyboard.release(KEY_RETURN);
+            }else{
+              Keyboard.release(key.key[i].kchar);
+            }
+            break;
+            case IDLE:
+            //
+            Keyboard.releaseAll();
           }
-          break;
-          case HOLD:
-          // buff = "
-          break;
-          case RELEASED:
-          // buff = " RELEASED.";
-          if (key.key[i].kchar == '*'){
-            Keyboard.release(KEY_BACKSPACE);
-          }else if (key.key[i].kchar == '#'){
-            Keyboard.release(KEY_RETURN);
-          }else{
-            Keyboard.release(key.key[i].kchar);
-          }
-          break;
-          case IDLE:
-          // buff = " I
-          Keyboard.releaseAll();
-        }
-        // Serial.print("Key ");
-        // Serial.print(key.key[i].kchar);
-        // Serial.println(buff);
+          // Serial.print("Key ");
+          // Serial.print(key.key[i].kchar);
+          // Serial.print("");
+          // Serial.println(key.key[i].kstate);
         }
       }
     }
